@@ -8,7 +8,7 @@ export default function DayTabs() {
   const setActiveDay = useTrip((s) => s.setActiveDay);
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto pb-1">
+    <div className="flex gap-2 overflow-x-auto pb-1">
       {days.map((d) => {
         const active = d.id === activeDayId;
         const label = d.name.split("—")[1]?.trim() ?? d.name;
@@ -16,14 +16,14 @@ export default function DayTabs() {
           <button
             key={d.id}
             onClick={() => setActiveDay(d.id)}
-            className={`shrink-0 px-3 py-2 rounded-lg text-left border transition ${
+            className={`shrink-0 px-3.5 py-2 rounded-xl text-left transition-colors ${
               active
-                ? "text-white border-transparent"
-                : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                ? "text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
             style={active ? { background: d.color } : undefined}
           >
-            <div className="text-xs opacity-80">Day {d.index}</div>
+            <div className="text-[11px] opacity-70">Day {d.index}</div>
             <div className="text-sm font-medium whitespace-nowrap">{label}</div>
           </button>
         );

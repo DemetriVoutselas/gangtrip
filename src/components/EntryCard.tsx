@@ -44,7 +44,7 @@ export default function EntryCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white rounded-xl border border-slate-200 shadow-sm"
+      className="bg-white rounded-2xl border border-black/5 shadow-sm shadow-slate-900/[0.03]"
       onMouseEnter={() => onHover?.(entry.id)}
       onMouseLeave={() => onHover?.(null)}
     >
@@ -111,16 +111,16 @@ export default function EntryCard({
           )}
         </div>
 
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex flex-col items-end gap-1.5">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="text-xs text-slate-500 hover:text-slate-800"
+            className="text-xs text-slate-500 hover:text-slate-900 transition-colors"
           >
             {open ? "Done" : "Edit"}
           </button>
           <button
             onClick={() => removeEntry(dayId, entry.id)}
-            className="text-xs text-red-400 hover:text-red-600"
+            className="text-xs text-slate-400 hover:text-red-500 transition-colors"
           >
             Delete
           </button>
@@ -128,13 +128,13 @@ export default function EntryCard({
       </div>
 
       {open && (
-        <div className="border-t border-slate-100 p-3 space-y-3">
+        <div className="border-t border-black/5 p-3 space-y-3">
           <label className="block">
             <span className="text-xs text-slate-500">Title</span>
             <input
               value={entry.title}
               onChange={(e) => updateEntry(dayId, entry.id, { title: e.target.value })}
-              className="w-full mt-0.5 px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+              className="w-full mt-1 px-3 py-2 rounded-xl bg-slate-100 border border-transparent text-sm focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
             />
           </label>
 
@@ -166,7 +166,7 @@ export default function EntryCard({
                 onChange={(e) =>
                   updateEntry(dayId, entry.id, { startTime: e.target.value || undefined })
                 }
-                className="w-full mt-0.5 px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-slate-100 border border-transparent text-sm focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
               />
             </label>
             <label className="flex-1">
@@ -177,7 +177,7 @@ export default function EntryCard({
                 onChange={(e) =>
                   updateEntry(dayId, entry.id, { endTime: e.target.value || undefined })
                 }
-                className="w-full mt-0.5 px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-slate-100 border border-transparent text-sm focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
               />
             </label>
           </div>
@@ -190,7 +190,7 @@ export default function EntryCard({
                 updateEntry(dayId, entry.id, { note: e.target.value || undefined })
               }
               rows={2}
-              className="w-full mt-0.5 px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+              className="w-full mt-1 px-3 py-2 rounded-xl bg-slate-100 border border-transparent text-sm focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
             />
           </label>
 
@@ -202,7 +202,7 @@ export default function EntryCard({
                 onChange={(e) =>
                   updateEntry(dayId, entry.id, { branchIndex: Number(e.target.value) })
                 }
-                className="w-full mt-0.5 px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-slate-100 border border-transparent text-sm focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
               >
                 {place.branches.map((b, i) => (
                   <option key={i} value={i}>
@@ -237,7 +237,7 @@ export default function EntryCard({
                     moveAcross(dayId, target, entry.id, to?.entries.length ?? 0);
                   }
                 }}
-                className="w-full mt-0.5 px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+                className="w-full mt-1 px-3 py-2 rounded-xl bg-slate-100 border border-transparent text-sm focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
               >
                 <option value="">Keep on this day…</option>
                 {days

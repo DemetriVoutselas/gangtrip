@@ -52,27 +52,27 @@ export default function AddEntryBar({ dayId }: { dayId: string }) {
       <div className="flex gap-2">
         <button
           onClick={() => setPickerOpen(true)}
-          className="flex-1 px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+          className="flex-1 px-3 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
         >
-          + Add from library
+          Add from library
         </button>
         <button
           onClick={() => setCustomOpen((v) => !v)}
-          className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="flex-1 px-3 py-2.5 rounded-xl bg-slate-100 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
         >
-          + Add custom
+          Add custom
         </button>
       </div>
 
       {customOpen && (
-        <div className="mt-2 p-3 bg-white rounded-xl border border-slate-200 space-y-2">
+        <div className="mt-2.5 p-4 bg-white rounded-2xl border border-black/5 shadow-sm shadow-slate-900/[0.03] space-y-3">
           <input
             autoFocus
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addCustom()}
             placeholder="e.g. Walk the Brooklyn Bridge"
-            className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+            className="w-full px-3 py-2 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
           />
           <div className="flex flex-wrap gap-1">
             {MEAL_SLOTS.map((s) => (
@@ -91,7 +91,7 @@ export default function AddEntryBar({ dayId }: { dayId: string }) {
           </div>
           <button
             onClick={addCustom}
-            className="px-3 py-1.5 rounded-lg bg-slate-800 text-white text-sm font-medium hover:bg-slate-900"
+            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors"
           >
             Add
           </button>

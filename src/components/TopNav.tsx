@@ -12,21 +12,24 @@ const LINKS = [
 export default function TopNav() {
   const pathname = usePathname();
   return (
-    <header className="flex items-center gap-4 px-4 py-3 border-b border-slate-200 bg-white shrink-0">
-      <Link href="/" className="text-lg font-bold shrink-0">
-        🗽 TripBoard
+    <header className="sticky top-0 z-[700] flex items-center gap-5 px-5 h-14 border-b border-black/5 bg-white/80 backdrop-blur-xl shrink-0">
+      <Link
+        href="/"
+        className="text-[15px] font-semibold tracking-tight shrink-0 text-slate-900"
+      >
+        TripBoard
       </Link>
-      <nav className="flex items-center gap-1">
+      <nav className="flex items-center gap-0.5">
         {LINKS.map((l) => {
           const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
           return (
             <Link
               key={l.href}
               href={l.href}
-              className={`text-sm px-3 py-1.5 rounded-lg transition ${
+              className={`text-[13px] px-3 py-1.5 rounded-full transition-colors ${
                 active
-                  ? "bg-slate-800 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
+                  ? "bg-slate-900/[0.06] text-slate-900 font-medium"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
               {l.label}

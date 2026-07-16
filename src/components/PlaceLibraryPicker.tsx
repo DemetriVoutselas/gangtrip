@@ -40,31 +40,31 @@ export default function PlaceLibraryPicker({ onPick, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[1000] bg-black/40 flex items-start justify-center p-4 sm:p-8"
+      className="fixed inset-0 z-[1000] bg-slate-900/30 backdrop-blur-sm flex items-start justify-center p-4 sm:p-8"
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-2xl max-h-[85vh] rounded-xl shadow-xl flex flex-col overflow-hidden"
+        className="bg-white w-full max-w-2xl max-h-[85vh] rounded-2xl shadow-2xl shadow-slate-900/20 flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-slate-200 flex items-center gap-2">
+        <div className="p-4 border-b border-black/5 flex items-center gap-2">
           <input
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search places (name, dish, neighborhood)…"
-            className="flex-1 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search places (name, dish, neighborhood)"
+            className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
           />
           <button
             onClick={onClose}
-            className="px-3 py-2 text-slate-500 hover:text-slate-800"
+            className="w-9 h-9 grid place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
             aria-label="Close"
           >
             ✕
           </button>
         </div>
 
-        <div className="px-4 py-2 border-b border-slate-100 flex gap-1.5 flex-wrap">
+        <div className="px-4 py-3 border-b border-black/5 flex gap-1.5 flex-wrap">
           <Chip active={cat === "all"} onClick={() => setCat("all")} label="All" />
           {cats.map((c) => (
             <Chip
@@ -82,10 +82,10 @@ export default function PlaceLibraryPicker({ onPick, onClose }: Props) {
             const isSel = selected?.id === p.id;
             const color = CATEGORY_BY_KEY[p.category]?.color ?? "#334155";
             return (
-              <div key={p.id} className="border-b border-slate-100">
+              <div key={p.id} className="border-b border-black/[0.04]">
                 <button
                   onClick={() => choose(p)}
-                  className={`w-full text-left px-4 py-3 hover:bg-slate-50 ${
+                  className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors ${
                     isSel ? "bg-slate-50" : ""
                   }`}
                 >
@@ -139,7 +139,7 @@ export default function PlaceLibraryPicker({ onPick, onClose }: Props) {
                     )}
                     <button
                       onClick={() => onPick(p, branchIdx)}
-                      className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                      className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                     >
                       Add to day
                     </button>
@@ -171,10 +171,10 @@ function Chip({
   return (
     <button
       onClick={onClick}
-      className={`text-xs px-2.5 py-1 rounded-full border transition ${
+      className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
         active
-          ? "bg-slate-800 text-white border-slate-800"
-          : "bg-white text-slate-600 border-slate-300 hover:border-slate-400"
+          ? "bg-slate-900 text-white border-slate-900"
+          : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
       }`}
     >
       {color && !active && (

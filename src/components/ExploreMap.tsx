@@ -235,23 +235,23 @@ export default function ExploreMap() {
   return (
     <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
-      <aside className="hidden lg:flex w-80 shrink-0 flex-col border-r border-slate-200 bg-white">
-        <div className="p-3 border-b border-slate-100">
+      <aside className="hidden lg:flex w-[340px] shrink-0 flex-col border-r border-black/5 bg-white">
+        <div className="px-5 pt-5 pb-4">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search places, dishes, neighborhoods…"
-            className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search places, dishes, neighborhoods"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
           />
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center justify-between mt-3 px-0.5">
             <span className="text-xs text-slate-400">
               {filteredPlaces.length} of {visiblePlaces.length} places
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {mounted && hiddenPlaceIds.length > 0 && (
                 <button
                   onClick={restoreHidden}
-                  className="text-xs text-slate-500 hover:underline"
+                  className="text-xs text-slate-400 hover:text-slate-700 transition-colors"
                 >
                   Restore {hiddenPlaceIds.length} hidden
                 </button>
@@ -262,7 +262,7 @@ export default function ExploreMap() {
                     allOn ? new Set() : new Set(explorableCategories.map((c) => c.key))
                   )
                 }
-                className="text-xs text-blue-600 hover:underline"
+                className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
               >
                 {allOn ? "Hide all" : "Show all"}
               </button>
@@ -275,21 +275,21 @@ export default function ExploreMap() {
               setForm(BLANK_FORM);
               resetGeo();
             }}
-            className={`mt-2 w-full text-sm px-3 py-2 rounded-lg font-medium transition ${
+            className={`mt-3 w-full text-sm px-3 py-2.5 rounded-xl font-medium transition-colors ${
               addMode
-                ? "bg-slate-800 text-white"
-                : "bg-emerald-600 text-white hover:bg-emerald-700"
+                ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                : "bg-blue-600 text-white hover:bg-blue-700"
             }`}
           >
-            {addMode ? "Cancel adding" : "＋ Add a location"}
+            {addMode ? "Cancel" : "Add a location"}
           </button>
         </div>
 
         {/* Add-location form */}
         {addMode && (
-          <div className="p-3 border-b border-slate-100 space-y-2 bg-emerald-50/40">
-            <p className="text-xs text-slate-500">
-              Search for a place, click the map, or type coordinates.
+          <div className="px-5 pb-4 space-y-2.5 border-t border-black/5 pt-4">
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Search for a place, click the map, or enter coordinates.
             </p>
 
             {/* Place search (geocoding) */}
@@ -305,28 +305,28 @@ export default function ExploreMap() {
                     setGeoLoading(false);
                   }
                 }}
-                placeholder="🔍 Search a place or address…"
-                className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Search a place or address"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
               />
               {geoQuery.trim().length >= 3 && (
-                <div className="absolute z-[600] left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                <div className="absolute z-[600] left-0 right-0 mt-1.5 bg-white border border-black/5 rounded-xl shadow-lg shadow-slate-900/10 max-h-56 overflow-y-auto overflow-hidden">
                   {geoLoading ? (
-                    <div className="px-3 py-2 text-xs text-slate-400">Searching…</div>
+                    <div className="px-3.5 py-2.5 text-xs text-slate-400">Searching…</div>
                   ) : geoResults.length > 0 ? (
                     geoResults.map((r, i) => (
                       <button
                         key={i}
                         onClick={() => pickGeoResult(r)}
-                        className="w-full text-left px-3 py-2 hover:bg-emerald-50 border-b border-slate-50 last:border-0"
+                        className="w-full text-left px-3.5 py-2.5 hover:bg-slate-50 transition-colors"
                       >
-                        <div className="text-sm font-medium text-slate-700 truncate">
+                        <div className="text-sm font-medium text-slate-800 truncate">
                           {r.name}
                         </div>
                         <div className="text-xs text-slate-400 truncate">{r.label}</div>
                       </button>
                     ))
                   ) : (
-                    <div className="px-3 py-2 text-xs text-slate-400">No matches.</div>
+                    <div className="px-3.5 py-2.5 text-xs text-slate-400">No matches.</div>
                   )}
                 </div>
               )}
@@ -336,12 +336,12 @@ export default function ExploreMap() {
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="Name (e.g. Joe's Coffee)"
-              className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
             />
             <select
               value={form.category}
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-              className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
             >
               {explorableCategories.map((c) => (
                 <option key={c.key} value={c.key}>
@@ -355,20 +355,20 @@ export default function ExploreMap() {
                 onChange={(e) => setForm((f) => ({ ...f, lat: e.target.value }))}
                 placeholder="lat"
                 inputMode="decimal"
-                className="w-1/2 px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+                className="w-1/2 px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
               />
               <input
                 value={form.lng}
                 onChange={(e) => setForm((f) => ({ ...f, lng: e.target.value }))}
                 placeholder="lng"
                 inputMode="decimal"
-                className="w-1/2 px-2 py-1.5 rounded-lg border border-slate-300 text-sm"
+                className="w-1/2 px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
               />
             </div>
             <button
               onClick={submitAdd}
               disabled={!form.name.trim() || !form.lat || !form.lng}
-              className="w-full text-sm px-3 py-2 rounded-lg font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full text-sm px-3 py-2.5 rounded-xl font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Add location
             </button>
@@ -377,30 +377,35 @@ export default function ExploreMap() {
 
         {/* Transit / route panel */}
         {route.length > 0 && (
-          <div className="p-3 border-b border-slate-100 bg-blue-50/50">
+          <div className="px-5 py-4 border-t border-black/5">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-700">Transit</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                Transit
+              </span>
               <button
                 onClick={() => setRoute([])}
-                className="text-xs text-slate-500 hover:underline"
+                className="text-xs text-slate-400 hover:text-slate-700 transition-colors"
               >
                 Clear
               </button>
             </div>
-            <div className="text-xs text-slate-600 mt-1 space-y-0.5">
-              <div>
-                <span className="font-semibold text-blue-700">A:</span> {route[0].label}
+            <div className="text-xs text-slate-600 mt-2 space-y-1">
+              <div className="flex gap-2">
+                <span className="font-semibold text-blue-600 w-3">A</span>
+                <span className="truncate">{route[0].label}</span>
               </div>
-              <div>
-                <span className="font-semibold text-blue-700">B:</span>{" "}
-                {route[1]?.label ?? (
+              <div className="flex gap-2">
+                <span className="font-semibold text-blue-600 w-3">B</span>
+                {route[1]?.label ? (
+                  <span className="truncate">{route[1].label}</span>
+                ) : (
                   <span className="text-slate-400">select a second place…</span>
                 )}
               </div>
             </div>
             {suggestion && (
-              <div className="mt-2 rounded-lg bg-white border border-blue-100 px-3 py-2">
-                <div className="text-xs text-slate-400 mb-1.5">
+              <div className="mt-3">
+                <div className="text-xs text-slate-400 mb-2">
                   {formatDistance(suggestion.meters)} apart · ways to get there
                 </div>
                 <div className="flex flex-col gap-1">
@@ -409,21 +414,23 @@ export default function ExploreMap() {
                     return (
                       <div
                         key={o.mode}
-                        className={`flex items-center justify-between rounded px-2 py-1 text-sm ${
+                        className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
                           isRec
-                            ? "bg-blue-600 text-white font-semibold"
-                            : "text-slate-600"
+                            ? "bg-blue-600 text-white font-medium"
+                            : "text-slate-600 hover:bg-slate-50"
                         }`}
                       >
                         <span>
                           {o.icon} {o.label}
                           {isRec && (
-                            <span className="ml-1 text-[10px] font-normal opacity-90">
-                              · best
+                            <span className="ml-1.5 text-[10px] font-normal opacity-80">
+                              Best
                             </span>
                           )}
                         </span>
-                        <span>~{o.minutes} min</span>
+                        <span className={isRec ? "" : "text-slate-400"}>
+                          ~{o.minutes} min
+                        </span>
                       </div>
                     );
                   })}
@@ -433,26 +440,32 @@ export default function ExploreMap() {
           </div>
         )}
 
-        <div className="p-3 border-b border-slate-100 flex flex-wrap gap-1.5">
+        <div className="px-5 py-4 border-t border-black/5 flex flex-wrap gap-1.5">
           {explorableCategories.map((c) => {
             const on = active.has(c.key);
             return (
               <button
                 key={c.key}
                 onClick={() => toggleCat(c.key)}
-                className={`text-xs px-2 py-1 rounded-full border transition ${
-                  on ? "text-white border-transparent" : "text-slate-500 border-slate-300"
+                className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  on
+                    ? "text-white border-transparent"
+                    : "text-slate-400 border-slate-200 hover:border-slate-300"
                 }`}
                 style={on ? { background: c.color } : undefined}
                 title={c.name}
               >
-                {c.name.split(" ")[0]} ({catCounts.get(c.key) ?? 0})
+                {c.name.split(" ")[0]}
+                <span className={on ? "opacity-70" : "text-slate-300"}>
+                  {" "}
+                  {catCounts.get(c.key) ?? 0}
+                </span>
               </button>
             );
           })}
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-2.5 py-2 border-t border-black/5">
           {filteredPlaces.map((p) => {
             const color = CATEGORY_BY_KEY[p.category]?.color ?? "#334155";
             const bi = p.bestBranchIndex ?? 0;
@@ -461,24 +474,26 @@ export default function ExploreMap() {
             return (
               <div
                 key={p.id}
-                className={`flex items-start gap-2 px-3 py-2.5 border-b border-slate-50 ${
+                className={`group flex items-start gap-3 px-2.5 py-2.5 rounded-xl transition-colors ${
                   isSel ? "bg-blue-50" : "hover:bg-slate-50"
                 }`}
               >
                 <button
                   onClick={() => selectPlaceForRoute(p)}
-                  className="flex items-start gap-2 flex-1 min-w-0 text-left"
+                  className="flex items-start gap-3 flex-1 min-w-0 text-left"
                 >
                   <span
-                    className="w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold text-white shrink-0"
+                    className="w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold text-white shrink-0 mt-0.5"
                     style={{ background: color }}
                   >
                     {p.id}
                   </span>
                   <span className="min-w-0">
-                    <span className="font-medium text-sm truncate block">{p.name}</span>
+                    <span className="font-medium text-sm truncate block text-slate-800">
+                      {p.name}
+                    </span>
                     {p.famousFor && (
-                      <span className="text-xs text-slate-500 mt-0.5 line-clamp-2 block">
+                      <span className="text-xs text-slate-400 mt-0.5 line-clamp-2 block">
                         {p.famousFor}
                       </span>
                     )}
@@ -493,7 +508,7 @@ export default function ExploreMap() {
                   <button
                     onClick={() => requestRemovePlace(p.id)}
                     title="Remove from map"
-                    className="text-slate-300 hover:text-red-500 text-sm leading-none"
+                    className="text-slate-300 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     ✕
                   </button>
@@ -502,7 +517,7 @@ export default function ExploreMap() {
             );
           })}
           {filteredPlaces.length === 0 && (
-            <div className="p-6 text-center text-sm text-slate-400">No places match.</div>
+            <div className="p-8 text-center text-sm text-slate-400">No places match.</div>
           )}
         </div>
       </aside>
@@ -521,21 +536,21 @@ export default function ExploreMap() {
         />
 
         {addMode && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[500] bg-slate-800 text-white text-xs px-3 py-2 rounded-full shadow-lg">
-            Click the map to drop your new location
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[500] bg-slate-900/90 backdrop-blur text-white text-xs px-4 py-2.5 rounded-full shadow-lg">
+            Tap the map to drop your new location
           </div>
         )}
 
         {/* Mobile category filter overlay */}
-        <div className="lg:hidden absolute top-2 left-2 right-2 z-[500] bg-white/95 rounded-lg shadow p-2 flex gap-1.5 overflow-x-auto">
+        <div className="lg:hidden absolute top-3 left-3 right-3 z-[500] bg-white/80 backdrop-blur-xl rounded-2xl shadow-lg shadow-slate-900/5 border border-black/5 p-2 flex gap-1.5 overflow-x-auto">
           {explorableCategories.map((c) => {
             const on = active.has(c.key);
             return (
               <button
                 key={c.key}
                 onClick={() => toggleCat(c.key)}
-                className={`text-xs px-2 py-1 rounded-full border shrink-0 ${
-                  on ? "text-white border-transparent" : "text-slate-500 border-slate-300"
+                className={`text-xs px-3 py-1.5 rounded-full border shrink-0 transition-colors ${
+                  on ? "text-white border-transparent" : "text-slate-500 border-slate-200"
                 }`}
                 style={on ? { background: c.color } : undefined}
               >
@@ -549,34 +564,36 @@ export default function ExploreMap() {
       {/* Remove confirmation */}
       {pendingRemoval && (
         <div
-          className="fixed inset-0 z-[1000] grid place-items-center bg-black/40 p-4"
+          className="fixed inset-0 z-[1000] grid place-items-center bg-slate-900/30 backdrop-blur-sm p-4"
           onClick={() => setPendingRemoval(null)}
         >
           <div
-            className="bg-white rounded-xl shadow-xl max-w-sm w-full p-5"
+            className="bg-white rounded-2xl shadow-2xl shadow-slate-900/20 max-w-sm w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-semibold text-slate-800">Remove location?</h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <h2 className="text-lg font-semibold text-slate-900 tracking-tight">
+              Remove location?
+            </h2>
+            <p className="text-sm text-slate-500 mt-1.5">
               Remove{" "}
-              <span className="font-medium text-slate-700">{pendingRemoval.name}</span> from
+              <span className="font-medium text-slate-800">{pendingRemoval.name}</span> from
               the map?
             </p>
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-slate-400 mt-2.5 leading-relaxed">
               {customPlaces.some((p) => p.id === pendingRemoval.id)
                 ? "This is a location you added — it can't be restored later."
                 : 'You can bring it back later with the "Restore hidden" link.'}
             </p>
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end gap-2 mt-5">
               <button
                 onClick={() => setPendingRemoval(null)}
-                className="px-3 py-1.5 rounded-lg text-sm text-slate-600 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmRemovePlace}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700"
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
               >
                 Remove
               </button>

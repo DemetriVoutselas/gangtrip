@@ -49,24 +49,28 @@ export default function Planner() {
 
   return (
     <div className="flex flex-col h-screen">
-      <header className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-200 bg-white">
+      <header className="sticky top-0 z-[700] flex items-center justify-between gap-3 px-5 h-14 border-b border-black/5 bg-white/80 backdrop-blur-xl">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/" className="text-lg font-bold shrink-0">
-            🗽 TripBoard
+          <Link
+            href="/"
+            className="text-[15px] font-semibold tracking-tight shrink-0 text-slate-900"
+          >
+            TripBoard
           </Link>
-          <span className="text-sm text-slate-400 truncate hidden sm:block">
+          <span className="text-[13px] text-slate-400 truncate hidden sm:block">
             {trip.title}
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <ToolBtn onClick={undo} disabled={!canUndo} title="Undo (⌘Z)">
             ↶
           </ToolBtn>
           <ToolBtn onClick={redo} disabled={!canRedo} title="Redo (⌘⇧Z)">
             ↷
           </ToolBtn>
+          <span className="w-px h-5 bg-black/10 mx-1" />
           <ToolBtn onClick={() => downloadICS(trip)} title="Export calendar (.ics)">
-            📅 Export
+            Export
           </ToolBtn>
           <ToolBtn
             onClick={() => {
@@ -75,36 +79,36 @@ export default function Planner() {
             }}
             title="Reset to seed"
           >
-            ⟲ Reset
+            Reset
           </ToolBtn>
         </div>
       </header>
 
-      <div className="px-4 py-3 border-b border-slate-200 bg-white">
+      <div className="px-5 py-3 border-b border-black/5 bg-white/60">
         <DayTabs />
       </div>
 
       <main className="flex-1 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] overflow-hidden">
-        <section className="overflow-y-auto p-4">
+        <section className="overflow-y-auto px-5 py-5">
           {day && (
             <>
-              <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-start justify-between gap-2 mb-4">
                 <div className="min-w-0">
                   <input
                     value={day.name}
                     onChange={(e) => setDayMeta(day.id, { name: e.target.value })}
-                    className="text-base font-semibold w-full bg-transparent focus:outline-none focus:bg-slate-100 rounded px-1 -ml-1"
+                    className="text-lg font-semibold tracking-tight w-full bg-transparent focus:outline-none focus:bg-slate-100 rounded-lg px-1.5 -ml-1.5 transition-colors"
                   />
-                  <div className="px-1">
+                  <div className="px-1.5 mt-1">
                     <DaySummary day={day} />
                   </div>
                 </div>
                 <button
                   onClick={() => optimize(day.id)}
-                  className="shrink-0 text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50"
+                  className="shrink-0 text-xs px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
                   title="Reorder to minimize walking (respects meal order)"
                 >
-                  ✨ Optimize
+                  Optimize
                 </button>
               </div>
 
@@ -114,7 +118,7 @@ export default function Planner() {
           )}
         </section>
 
-        <section className="hidden lg:block p-4 pl-0">
+        <section className="hidden lg:block p-5 pl-0">
           <MapColumn day={day} highlightEntryId={hover} />
         </section>
       </main>
@@ -138,7 +142,7 @@ function ToolBtn({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className="text-sm px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+      className="text-[13px] px-3 py-1.5 rounded-full text-slate-600 hover:bg-slate-900/[0.06] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
     >
       {children}
     </button>
