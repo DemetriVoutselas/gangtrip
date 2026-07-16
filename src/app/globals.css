@@ -66,3 +66,25 @@ body {
   font-size: 11px;
   font-weight: 700;
 }
+
+/* Home-base marker: dark rounded square with a ★ (distinct from numbered pins) */
+.tb-home-pin {
+  background: transparent;
+  border: none;
+}
+.tb-home-pin > div {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  border: 2px solid #fff;
+}
+.tb-home-pin span {
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+}

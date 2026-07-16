@@ -24,6 +24,18 @@ const seedExplorable = places.filter((p) => p.category !== "home");
 const explorableCategories = categories.filter((c) => c.key !== "home");
 const DEFAULT_CATEGORY = explorableCategories[0]?.key ?? "act";
 
+// The home base (a special ★ marker, as in the original prototype). It's kept
+// out of the toggleable categories/list and always shown on the map.
+const homePlace = places.find((p) => p.category === "home");
+const homeBaseMarker = homePlace
+  ? {
+      lat: homePlace.branches[0].lat,
+      lng: homePlace.branches[0].lng,
+      name: homePlace.name,
+      label: homePlace.branches[0].label,
+    }
+  : null;
+
 interface AddForm {
   name: string;
   category: string;
@@ -417,6 +429,120 @@ export default function ExploreMap() {
     </div>
   );
 
+  // Shared add-a-location form (geocode search + progressive-disclosure fields),
+  // reused by the desktop sidebar and the mobile bottom sheet.
+  const addFormBody = (
+    <div className="space-y-2.5">
+      {/* Place search (geocoding) */}
+      <div className="relative">
+        <input
+          value={geoQuery}
+          onChange={(e) => {
+            const v = e.target.value;
+            setGeoQuery(v);
+            if (v.trim().length >= 3) setGeoLoading(true);
+            else {
+              setGeoResults([]);
+              setGeoLoading(false);
+            }
+          }}
+          placeholder="Search a place or address"
+          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
+        />
+        {geoQuery.trim().length >= 3 && (
+          <div className="absolute z-[700] left-0 right-0 mt-1.5 bg-white border border-black/5 rounded-xl shadow-lg shadow-slate-900/10 max-h-56 overflow-y-auto overflow-hidden">
+            {geoLoading ? (
+              <div className="px-3.5 py-2.5 text-xs text-slate-400">Searching…</div>
+            ) : geoResults.length > 0 ? (
+              geoResults.map((r, i) => (
+                <button
+                  key={i}
+                  onClick={() => pickGeoResult(r)}
+                  className="w-full text-left px-3.5 py-2.5 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="text-sm font-medium text-slate-800 truncate">
+                    {r.name}
+                  </div>
+                  <div className="text-xs text-slate-400 truncate">{r.label}</div>
+                </button>
+              ))
+            ) : (
+              <div className="px-3.5 py-2.5 text-xs text-slate-400">No matches.</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {!showDetails ? (
+        <p className="text-xs text-slate-400 leading-relaxed px-0.5">
+          Search above, tap the map, or{" "}
+          <button
+            onClick={() => setManualEntry(true)}
+            className="text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            enter details manually
+          </button>
+          .
+        </p>
+      ) : (
+        <>
+          <input
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            placeholder="Name (e.g. Joe's Coffee)"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
+          />
+          <select
+            value={form.category}
+            onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
+          >
+            {explorableCategories.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <input
+              value={form.lat}
+              onChange={(e) => setForm((f) => ({ ...f, lat: e.target.value }))}
+              placeholder="lat"
+              inputMode="decimal"
+              className="w-1/2 px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
+            />
+            <input
+              value={form.lng}
+              onChange={(e) => setForm((f) => ({ ...f, lng: e.target.value }))}
+              placeholder="lng"
+              inputMode="decimal"
+              className="w-1/2 px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
+            />
+          </div>
+          <button
+            onClick={submitAdd}
+            disabled={!form.name.trim() || !form.lat || !form.lng}
+            className="w-full text-sm px-3 py-2.5 rounded-xl font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Add location
+          </button>
+        </>
+      )}
+    </div>
+  );
+
+  // Toggle add-mode consistently; on mobile we also open the sheet so the form
+  // is visible while the map stays tappable behind it.
+  function toggleAddMode(expandSheet = false) {
+    setAddMode((v) => {
+      const next = !v;
+      if (next && expandSheet) setSheetExpanded(true);
+      return next;
+    });
+    setForm(BLANK_FORM);
+    resetGeo();
+  }
+
   return (
     <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
@@ -449,11 +575,7 @@ export default function ExploreMap() {
           )}
 
           <button
-            onClick={() => {
-              setAddMode((v) => !v);
-              setForm(BLANK_FORM);
-              resetGeo();
-            }}
+            onClick={() => toggleAddMode()}
             className={`mt-3 w-full text-sm px-3 py-2.5 rounded-xl font-medium transition-colors ${
               addMode
                 ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -466,103 +588,7 @@ export default function ExploreMap() {
 
         {/* Add-location form */}
         {addMode && (
-          <div className="px-5 pb-4 space-y-2.5 border-t border-black/5 pt-4">
-            {/* Place search (geocoding) */}
-            <div className="relative">
-              <input
-                value={geoQuery}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setGeoQuery(v);
-                  if (v.trim().length >= 3) setGeoLoading(true);
-                  else {
-                    setGeoResults([]);
-                    setGeoLoading(false);
-                  }
-                }}
-                placeholder="Search a place or address"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
-              />
-              {geoQuery.trim().length >= 3 && (
-                <div className="absolute z-[600] left-0 right-0 mt-1.5 bg-white border border-black/5 rounded-xl shadow-lg shadow-slate-900/10 max-h-56 overflow-y-auto overflow-hidden">
-                  {geoLoading ? (
-                    <div className="px-3.5 py-2.5 text-xs text-slate-400">Searching…</div>
-                  ) : geoResults.length > 0 ? (
-                    geoResults.map((r, i) => (
-                      <button
-                        key={i}
-                        onClick={() => pickGeoResult(r)}
-                        className="w-full text-left px-3.5 py-2.5 hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="text-sm font-medium text-slate-800 truncate">
-                          {r.name}
-                        </div>
-                        <div className="text-xs text-slate-400 truncate">{r.label}</div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3.5 py-2.5 text-xs text-slate-400">No matches.</div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {!showDetails ? (
-              <p className="text-xs text-slate-400 leading-relaxed px-0.5">
-                Search above, tap the map, or{" "}
-                <button
-                  onClick={() => setManualEntry(true)}
-                  className="text-blue-600 hover:text-blue-700 transition-colors"
-                >
-                  enter details manually
-                </button>
-                .
-              </p>
-            ) : (
-              <>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  placeholder="Name (e.g. Joe's Coffee)"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
-                />
-                <select
-                  value={form.category}
-                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
-                >
-                  {explorableCategories.map((c) => (
-                    <option key={c.key} value={c.key}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex gap-2">
-                  <input
-                    value={form.lat}
-                    onChange={(e) => setForm((f) => ({ ...f, lat: e.target.value }))}
-                    placeholder="lat"
-                    inputMode="decimal"
-                    className="w-1/2 px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
-                  />
-                  <input
-                    value={form.lng}
-                    onChange={(e) => setForm((f) => ({ ...f, lng: e.target.value }))}
-                    placeholder="lng"
-                    inputMode="decimal"
-                    className="w-1/2 px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
-                  />
-                </div>
-                <button
-                  onClick={submitAdd}
-                  disabled={!form.name.trim() || !form.lat || !form.lng}
-                  className="w-full text-sm px-3 py-2.5 rounded-xl font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Add location
-                </button>
-              </>
-            )}
-          </div>
+          <div className="px-5 pb-4 border-t border-black/5 pt-4">{addFormBody}</div>
         )}
 
         {/* Transit / route panel */}
@@ -659,6 +685,7 @@ export default function ExploreMap() {
       <div className="flex-1 min-w-0 relative">
         <ExploreMapInner
           markers={markers}
+          homeBase={homeBaseMarker}
           flyTarget={flyTarget}
           addMode={addMode}
           onMapClick={handleMapClick}
@@ -713,14 +740,29 @@ export default function ExploreMap() {
               <span className="text-sm font-semibold text-slate-900 tracking-tight">
                 {filteredPlaces.length} place{filteredPlaces.length === 1 ? "" : "s"}
               </span>
-              <button
-                onClick={() => setSheetExpanded((v) => !v)}
-                className="text-xs text-slate-400"
-              >
-                {sheetExpanded ? "Collapse" : "Expand"}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => toggleAddMode(true)}
+                  className="text-xs font-semibold text-blue-600"
+                >
+                  {addMode ? "Cancel" : "+ Add"}
+                </button>
+                <button
+                  onClick={() => setSheetExpanded((v) => !v)}
+                  className="text-xs text-slate-400"
+                >
+                  {sheetExpanded ? "Collapse" : "Expand"}
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Add-location form (mobile) */}
+          {addMode && (
+            <div className="px-4 pb-3 shrink-0 border-t border-black/5 pt-3">
+              {addFormBody}
+            </div>
+          )}
 
           {/* Search */}
           <div className="px-4 pb-2 shrink-0">

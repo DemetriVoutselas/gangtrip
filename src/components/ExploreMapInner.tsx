@@ -48,6 +48,17 @@ function pinIcon(n: number, color: string, isBest: boolean, isSelected: boolean)
   });
 }
 
+// Distinct home-base marker: a dark, rounded-square ★ pin (as in the original).
+function homeIcon() {
+  return L.divIcon({
+    className: "tb-home-pin",
+    html: `<div><span>★</span></div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -16],
+  });
+}
+
 function PopupContent({
   m,
   branch,
@@ -223,6 +234,7 @@ function ClickCapture({
 
 export default function ExploreMapInner({
   markers,
+  homeBase = null,
   flyTarget,
   addMode = false,
   onMapClick,
@@ -232,6 +244,7 @@ export default function ExploreMapInner({
   onRemovePlace,
 }: {
   markers: MarkerPoint[];
+  homeBase?: { lat: number; lng: number; name: string; label: string } | null;
   flyTarget: { lat: number; lng: number; k: number } | null;
   addMode?: boolean;
   onMapClick?: (lat: number, lng: number) => void;
@@ -268,6 +281,19 @@ export default function ExploreMapInner({
           positions={routePoints}
           pathOptions={{ color: "#2563eb", weight: 4, opacity: 0.85, dashArray: "6 8" }}
         />
+      )}
+
+      {homeBase && (
+        <Marker position={[homeBase.lat, homeBase.lng]} icon={homeIcon()}>
+          <Popup>
+            <div style={{ minWidth: 140 }}>
+              <div style={{ fontWeight: 700 }}>{homeBase.name}</div>
+              <div style={{ fontSize: 12, marginTop: 2, color: "#64748b" }}>
+                ★ Home base · {homeBase.label}
+              </div>
+            </div>
+          </Popup>
+        </Marker>
       )}
 
       {markers.map((m) => {
