@@ -8,6 +8,7 @@ import { useExplore } from "@/lib/explore-store";
 import { useMounted } from "@/lib/useMounted";
 import { transitSuggestion, formatDistance } from "@/lib/geo";
 import { searchPlaces, type GeocodeResult } from "@/lib/geocode";
+import type { Place } from "@/lib/types";
 import type { MarkerPoint, RoutePoint } from "./ExploreMapInner";
 
 const ExploreMapInner = dynamic(() => import("./ExploreMapInner"), {
@@ -31,6 +32,74 @@ interface AddForm {
 }
 
 const BLANK_FORM: AddForm = { name: "", category: DEFAULT_CATEGORY, lat: "", lng: "" };
+
+// Shared place-list rows, reused by the desktop sidebar and the mobile sheet.
+// A real component (not a render-time helper) so `onPick`/`onRemove` stay plain
+// event-handler props rather than callbacks touched during render.
+function PlaceListRows({
+  places,
+  route,
+  onPick,
+  onRemove,
+}: {
+  places: Place[];
+  route: RoutePoint[];
+  onPick: (p: Place) => void;
+  onRemove: (id: number) => void;
+}) {
+  if (places.length === 0) {
+    return <div className="p-8 text-center text-sm text-slate-400">No places match.</div>;
+  }
+  return (
+    <>
+      {places.map((p) => {
+        const color = CATEGORY_BY_KEY[p.category]?.color ?? "#334155";
+        const bi = p.bestBranchIndex ?? 0;
+        const selIndex = route.findIndex((r) => r.key === `${p.id}-${bi}`);
+        const isSel = selIndex !== -1;
+        return (
+          <div
+            key={p.id}
+            className={`group flex items-center gap-3 px-2.5 py-2 rounded-xl transition-colors ${
+              isSel ? "bg-blue-50" : "hover:bg-slate-50"
+            }`}
+          >
+            <button
+              onClick={() => onPick(p)}
+              className="flex items-center gap-3 flex-1 min-w-0 text-left"
+            >
+              <span
+                className="w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold text-white shrink-0"
+                style={{ background: color }}
+              >
+                {p.id}
+              </span>
+              <span className="min-w-0">
+                <span className="font-medium text-sm truncate block text-slate-800">
+                  {p.name}
+                </span>
+              </span>
+            </button>
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              {isSel && (
+                <span className="text-[10px] font-bold text-blue-600">
+                  {selIndex === 0 ? "A" : "B"}
+                </span>
+              )}
+              <button
+                onClick={() => onRemove(p.id)}
+                title="Remove from map"
+                className="text-slate-300 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
 
 export default function ExploreMap() {
   const mounted = useMounted();
@@ -70,6 +139,16 @@ export default function ExploreMap() {
   const [manualEntry, setManualEntry] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showAllModes, setShowAllModes] = useState(false);
+
+  // Mobile bottom sheet (the place list on phones). It snaps between a small
+  // "peek" and a fully-expanded state, and can be dragged by its grabber.
+  const SHEET_PEEK = 84; // px visible when collapsed
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const [sheetHeight, setSheetHeight] = useState(0);
+  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [sheetDrag, setSheetDrag] = useState(0); // live px offset while dragging
+  const [sheetDragging, setSheetDragging] = useState(false);
+  const sheetDragStart = useRef<{ pointer: number; base: number } | null>(null);
 
   // Merge seed + custom, minus hidden. Only after mount so SSR and the first
   // client render agree (persisted state hydrates post-mount).
@@ -207,6 +286,47 @@ export default function ExploreMap() {
     setGeoResults([]);
     setGeoLoading(false);
     setManualEntry(false);
+  }
+
+  // Measure the mobile sheet so we can translate it precisely between snaps.
+  useEffect(() => {
+    const el = sheetRef.current;
+    if (!el) return;
+    const update = () => setSheetHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [mounted]);
+
+  const sheetCollapsedOffset = Math.max(0, sheetHeight - SHEET_PEEK);
+  const sheetBaseOffset = sheetExpanded ? 0 : sheetCollapsedOffset;
+  const sheetOffset =
+    sheetHeight === 0
+      ? 1000 // not measured yet — park off-screen, then slide up to the peek
+      : sheetDragging
+        ? Math.min(sheetCollapsedOffset, Math.max(0, sheetBaseOffset + sheetDrag))
+        : sheetBaseOffset;
+
+  function onSheetGrabStart(e: React.PointerEvent) {
+    sheetDragStart.current = { pointer: e.clientY, base: sheetBaseOffset };
+    setSheetDragging(true);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+  function onSheetGrabMove(e: React.PointerEvent) {
+    if (!sheetDragStart.current) return;
+    setSheetDrag(e.clientY - sheetDragStart.current.pointer);
+  }
+  function onSheetGrabEnd() {
+    if (!sheetDragStart.current) return;
+    const final = Math.min(
+      sheetCollapsedOffset,
+      Math.max(0, sheetDragStart.current.base + sheetDrag)
+    );
+    setSheetExpanded(final < sheetCollapsedOffset / 2);
+    setSheetDragging(false);
+    setSheetDrag(0);
+    sheetDragStart.current = null;
   }
 
   function pickGeoResult(r: GeocodeResult) {
@@ -526,54 +646,12 @@ export default function ExploreMap() {
         )}
 
         <div className="flex-1 overflow-y-auto px-2.5 py-2 border-t border-black/5">
-          {filteredPlaces.map((p) => {
-            const color = CATEGORY_BY_KEY[p.category]?.color ?? "#334155";
-            const bi = p.bestBranchIndex ?? 0;
-            const selIndex = route.findIndex((r) => r.key === `${p.id}-${bi}`);
-            const isSel = selIndex !== -1;
-            return (
-              <div
-                key={p.id}
-                className={`group flex items-center gap-3 px-2.5 py-2 rounded-xl transition-colors ${
-                  isSel ? "bg-blue-50" : "hover:bg-slate-50"
-                }`}
-              >
-                <button
-                  onClick={() => selectPlaceForRoute(p)}
-                  className="flex items-center gap-3 flex-1 min-w-0 text-left"
-                >
-                  <span
-                    className="w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold text-white shrink-0"
-                    style={{ background: color }}
-                  >
-                    {p.id}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="font-medium text-sm truncate block text-slate-800">
-                      {p.name}
-                    </span>
-                  </span>
-                </button>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  {isSel && (
-                    <span className="text-[10px] font-bold text-blue-600">
-                      {selIndex === 0 ? "A" : "B"}
-                    </span>
-                  )}
-                  <button
-                    onClick={() => requestRemovePlace(p.id)}
-                    title="Remove from map"
-                    className="text-slate-300 hover:text-red-500 text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-          {filteredPlaces.length === 0 && (
-            <div className="p-8 text-center text-sm text-slate-400">No places match.</div>
-          )}
+          <PlaceListRows
+            places={filteredPlaces}
+            route={route}
+            onPick={selectPlaceForRoute}
+            onRemove={requestRemovePlace}
+          />
         </div>
       </aside>
 
@@ -609,6 +687,63 @@ export default function ExploreMap() {
               {filterPanelBody}
             </div>
           )}
+        </div>
+
+        {/* Mobile bottom sheet — draggable list of all places */}
+        <div
+          ref={sheetRef}
+          className="lg:hidden absolute inset-x-0 bottom-0 z-[600] h-[78%] flex flex-col bg-white/95 backdrop-blur-xl rounded-t-2xl border-t border-black/5 shadow-[0_-8px_30px_rgba(15,23,42,0.12)]"
+          style={{
+            transform: `translateY(${sheetOffset}px)`,
+            transition: sheetDragging
+              ? "none"
+              : "transform 0.34s cubic-bezier(0.32,0.72,0,1)",
+          }}
+        >
+          {/* Grabber + header (drag target, also taps to toggle) */}
+          <div
+            className="shrink-0 pt-2.5 pb-2 cursor-grab active:cursor-grabbing touch-none select-none"
+            onPointerDown={onSheetGrabStart}
+            onPointerMove={onSheetGrabMove}
+            onPointerUp={onSheetGrabEnd}
+            onPointerCancel={onSheetGrabEnd}
+          >
+            <div className="mx-auto w-9 h-1.5 rounded-full bg-slate-300" />
+            <div className="flex items-center justify-between px-4 pt-2">
+              <span className="text-sm font-semibold text-slate-900 tracking-tight">
+                {filteredPlaces.length} place{filteredPlaces.length === 1 ? "" : "s"}
+              </span>
+              <button
+                onClick={() => setSheetExpanded((v) => !v)}
+                className="text-xs text-slate-400"
+              >
+                {sheetExpanded ? "Collapse" : "Expand"}
+              </button>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="px-4 pb-2 shrink-0">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search places, dishes, neighborhoods"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-transparent text-sm placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-900/[0.04] transition"
+            />
+          </div>
+
+          {/* List */}
+          <div className="flex-1 overflow-y-auto px-2 pb-6 border-t border-black/5 pt-1">
+            <PlaceListRows
+              places={filteredPlaces}
+              route={route}
+              onPick={(p) => {
+                selectPlaceForRoute(p);
+                setSheetExpanded(false);
+              }}
+              onRemove={requestRemovePlace}
+            />
+          </div>
         </div>
       </div>
 
