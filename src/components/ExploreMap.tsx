@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Fuse from "fuse.js";
 import { categories, places, CATEGORY_BY_KEY } from "@/lib/seed";
 import { useExplore } from "@/lib/explore-store";
 import { useMounted } from "@/lib/useMounted";
 import { transitSuggestion, formatDistance } from "@/lib/geo";
+import { searchPlaces, type GeocodeResult } from "@/lib/geocode";
 import type { MarkerPoint, RoutePoint } from "./ExploreMapInner";
 
 const ExploreMapInner = dynamic(() => import("./ExploreMapInner"), {
@@ -54,6 +55,11 @@ export default function ExploreMap() {
   // Add-a-location mode + draft form.
   const [addMode, setAddMode] = useState(false);
   const [form, setForm] = useState<AddForm>(BLANK_FORM);
+
+  // Place search (geocoding) for the add-location form.
+  const [geoQuery, setGeoQuery] = useState("");
+  const [geoResults, setGeoResults] = useState<GeocodeResult[]>([]);
+  const [geoLoading, setGeoLoading] = useState(false);
 
   // Pending removal awaiting confirmation.
   const [pendingRemoval, setPendingRemoval] = useState<{ id: number; name: string } | null>(
@@ -165,6 +171,48 @@ export default function ExploreMap() {
     setForm((f) => ({ ...f, lat: lat.toFixed(5), lng: lng.toFixed(5) }));
   }
 
+  // Debounced geocoding search while adding a location.
+  useEffect(() => {
+    const q = geoQuery.trim();
+    if (!addMode || q.length < 3) return;
+    const controller = new AbortController();
+    let active = true;
+    const timer = setTimeout(() => {
+      searchPlaces(q, controller.signal)
+        .then((r) => {
+          if (active) setGeoResults(r);
+        })
+        .catch(() => {
+          if (active) setGeoResults([]);
+        })
+        .finally(() => {
+          if (active) setGeoLoading(false);
+        });
+    }, 350);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [geoQuery, addMode]);
+
+  function resetGeo() {
+    setGeoQuery("");
+    setGeoResults([]);
+    setGeoLoading(false);
+  }
+
+  function pickGeoResult(r: GeocodeResult) {
+    setForm((f) => ({
+      ...f,
+      name: r.name,
+      lat: r.lat.toFixed(5),
+      lng: r.lng.toFixed(5),
+    }));
+    focusPlace(r.lat, r.lng);
+    resetGeo();
+  }
+
   function submitAdd() {
     const latN = parseFloat(form.lat);
     const lngN = parseFloat(form.lng);
@@ -172,6 +220,7 @@ export default function ExploreMap() {
     addPlace({ name: form.name.trim(), category: form.category, lat: latN, lng: lngN });
     focusPlace(latN, lngN);
     setForm(BLANK_FORM);
+    resetGeo();
     setAddMode(false);
   }
 
@@ -224,6 +273,7 @@ export default function ExploreMap() {
             onClick={() => {
               setAddMode((v) => !v);
               setForm(BLANK_FORM);
+              resetGeo();
             }}
             className={`mt-2 w-full text-sm px-3 py-2 rounded-lg font-medium transition ${
               addMode
@@ -239,8 +289,49 @@ export default function ExploreMap() {
         {addMode && (
           <div className="p-3 border-b border-slate-100 space-y-2 bg-emerald-50/40">
             <p className="text-xs text-slate-500">
-              Click anywhere on the map to drop the pin, or type coordinates below.
+              Search for a place, click the map, or type coordinates.
             </p>
+
+            {/* Place search (geocoding) */}
+            <div className="relative">
+              <input
+                value={geoQuery}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setGeoQuery(v);
+                  if (v.trim().length >= 3) setGeoLoading(true);
+                  else {
+                    setGeoResults([]);
+                    setGeoLoading(false);
+                  }
+                }}
+                placeholder="🔍 Search a place or address…"
+                className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              {geoQuery.trim().length >= 3 && (
+                <div className="absolute z-[600] left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                  {geoLoading ? (
+                    <div className="px-3 py-2 text-xs text-slate-400">Searching…</div>
+                  ) : geoResults.length > 0 ? (
+                    geoResults.map((r, i) => (
+                      <button
+                        key={i}
+                        onClick={() => pickGeoResult(r)}
+                        className="w-full text-left px-3 py-2 hover:bg-emerald-50 border-b border-slate-50 last:border-0"
+                      >
+                        <div className="text-sm font-medium text-slate-700 truncate">
+                          {r.name}
+                        </div>
+                        <div className="text-xs text-slate-400 truncate">{r.label}</div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-xs text-slate-400">No matches.</div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <input
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
