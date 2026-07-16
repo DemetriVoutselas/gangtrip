@@ -55,6 +55,11 @@ export default function ExploreMap() {
   const [addMode, setAddMode] = useState(false);
   const [form, setForm] = useState<AddForm>(BLANK_FORM);
 
+  // Pending removal awaiting confirmation.
+  const [pendingRemoval, setPendingRemoval] = useState<{ id: number; name: string } | null>(
+    null
+  );
+
   // Merge seed + custom, minus hidden. Only after mount so SSR and the first
   // client render agree (persisted state hydrates post-mount).
   const basePlaces = useMemo(
@@ -142,9 +147,17 @@ export default function ExploreMap() {
     focusPlace(b.lat, b.lng);
   }
 
-  function handleRemovePlace(id: number) {
+  function requestRemovePlace(id: number) {
+    const p = basePlaces.find((x) => x.id === id);
+    setPendingRemoval({ id, name: p?.name ?? "this location" });
+  }
+
+  function confirmRemovePlace() {
+    if (!pendingRemoval) return;
+    const { id } = pendingRemoval;
     removePlace(id);
     setRoute((r) => r.filter((pt) => Number(pt.key.split("-")[0]) !== id));
+    setPendingRemoval(null);
   }
 
   function handleMapClick(lat: number, lng: number) {
@@ -296,11 +309,33 @@ export default function ExploreMap() {
             </div>
             {suggestion && (
               <div className="mt-2 rounded-lg bg-white border border-blue-100 px-3 py-2">
-                <div className="text-sm font-semibold text-slate-800">
-                  {suggestion.icon} {suggestion.label} · ~{suggestion.estMinutes} min
+                <div className="text-xs text-slate-400 mb-1.5">
+                  {formatDistance(suggestion.meters)} apart · ways to get there
                 </div>
-                <div className="text-xs text-slate-500 mt-0.5">
-                  {suggestion.detail} · {formatDistance(suggestion.meters)} apart
+                <div className="flex flex-col gap-1">
+                  {suggestion.options.map((o) => {
+                    const isRec = o.mode === suggestion.recommended;
+                    return (
+                      <div
+                        key={o.mode}
+                        className={`flex items-center justify-between rounded px-2 py-1 text-sm ${
+                          isRec
+                            ? "bg-blue-600 text-white font-semibold"
+                            : "text-slate-600"
+                        }`}
+                      >
+                        <span>
+                          {o.icon} {o.label}
+                          {isRec && (
+                            <span className="ml-1 text-[10px] font-normal opacity-90">
+                              · best
+                            </span>
+                          )}
+                        </span>
+                        <span>~{o.minutes} min</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -365,7 +400,7 @@ export default function ExploreMap() {
                     </span>
                   )}
                   <button
-                    onClick={() => handleRemovePlace(p.id)}
+                    onClick={() => requestRemovePlace(p.id)}
                     title="Remove from map"
                     className="text-slate-300 hover:text-red-500 text-sm leading-none"
                   >
@@ -391,7 +426,7 @@ export default function ExploreMap() {
           routePoints={routeLine}
           selectedKeys={selectedKeys}
           onToggleRoute={toggleRoute}
-          onRemovePlace={handleRemovePlace}
+          onRemovePlace={requestRemovePlace}
         />
 
         {addMode && (
@@ -419,6 +454,45 @@ export default function ExploreMap() {
           })}
         </div>
       </div>
+
+      {/* Remove confirmation */}
+      {pendingRemoval && (
+        <div
+          className="fixed inset-0 z-[1000] grid place-items-center bg-black/40 p-4"
+          onClick={() => setPendingRemoval(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl max-w-sm w-full p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold text-slate-800">Remove location?</h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Remove{" "}
+              <span className="font-medium text-slate-700">{pendingRemoval.name}</span> from
+              the map?
+            </p>
+            <p className="text-xs text-slate-400 mt-2">
+              {customPlaces.some((p) => p.id === pendingRemoval.id)
+                ? "This is a location you added — it can't be restored later."
+                : 'You can bring it back later with the "Restore hidden" link.'}
+            </p>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setPendingRemoval(null)}
+                className="px-3 py-1.5 rounded-lg text-sm text-slate-600 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRemovePlace}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

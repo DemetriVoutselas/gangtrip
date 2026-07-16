@@ -42,66 +42,67 @@ export function leg(
   return { meters, minutes, suggestSubway: meters > 1600 };
 }
 
-export type TransitMode = "walk" | "subway" | "taxi";
+export type TransitMode = "walk" | "bus" | "subway" | "taxi";
 
-export interface TransitSuggestion {
+export interface TransitOption {
   mode: TransitMode;
   label: string;
   icon: string;
+  minutes: number;
+}
+
+export interface TransitSuggestion {
   meters: number;
-  walkMinutes: number;
-  estMinutes: number;
+  recommended: TransitMode;
+  options: TransitOption[];
   detail: string;
 }
 
+const MODE_META: Record<TransitMode, { label: string; icon: string }> = {
+  walk: { label: "Walk", icon: "🚶" },
+  bus: { label: "Bus", icon: "🚌" },
+  subway: { label: "Subway", icon: "🚇" },
+  taxi: { label: "Taxi / rideshare", icon: "🚕" },
+};
+
+// Rough door-to-door minute estimates for NYC, including a little wait time.
+const busMinutes = (m: number) => Math.round(5 + (m / 1000) * 4.6); // ~13 km/h w/ stops
+const subwayMinutes = (m: number) => Math.round(8 + (m / 1000) * 2); // wait + ride + walk
+const taxiMinutes = (m: number) => Math.round(6 + (m / 1000) * 3); // traffic-adjusted
+
 /**
- * Suggest the most sensible way to get between two points in the city,
- * with a rough time estimate. Thresholds are tuned for dense Manhattan:
+ * Suggest sensible ways to get between two points in the city, each with a
+ * rough time estimate, and flag the recommended one. Thresholds are tuned for
+ * dense Manhattan:
  *  - short hops are quickest on foot,
+ *  - a couple of avenues/crosstown blocks suit the bus,
  *  - medium distances favour the subway,
  *  - long crosstown/outer-borough trips favour a cab/rideshare.
+ * Estimates are straight-line heuristics, not real transit routing.
  */
 export function transitSuggestion(
   a: { lat: number; lng: number },
   b: { lat: number; lng: number }
 ): TransitSuggestion {
   const meters = haversineMeters(a, b);
-  const wMin = walkMinutes(meters);
 
-  if (meters <= 1200) {
-    return {
-      mode: "walk",
-      label: "Walk",
-      icon: "🚶",
-      meters,
-      walkMinutes: wMin,
-      estMinutes: wMin,
-      detail: `~${wMin} min on foot`,
-    };
-  }
+  const options: TransitOption[] = [];
+  if (meters <= 3000)
+    options.push({ mode: "walk", ...MODE_META.walk, minutes: walkMinutes(meters) });
+  if (meters <= 12000)
+    options.push({ mode: "bus", ...MODE_META.bus, minutes: busMinutes(meters) });
+  if (meters > 800)
+    options.push({ mode: "subway", ...MODE_META.subway, minutes: subwayMinutes(meters) });
+  options.push({ mode: "taxi", ...MODE_META.taxi, minutes: taxiMinutes(meters) });
 
-  if (meters <= 8000) {
-    // wait + ride + short walk to/from stations
-    const est = Math.round(8 + (meters / 1000) * 2);
-    return {
-      mode: "subway",
-      label: "Subway",
-      icon: "🚇",
-      meters,
-      walkMinutes: wMin,
-      estMinutes: est,
-      detail: `~${est} min by subway (vs ~${wMin} min walking)`,
-    };
-  }
+  let recommended: TransitMode;
+  if (meters <= 1200) recommended = "walk";
+  else if (meters <= 3000) recommended = "bus";
+  else if (meters <= 8000) recommended = "subway";
+  else recommended = "taxi";
 
-  const taxi = Math.round(6 + (meters / 1000) * 3);
-  return {
-    mode: "taxi",
-    label: "Taxi / rideshare",
-    icon: "🚕",
-    meters,
-    walkMinutes: wMin,
-    estMinutes: taxi,
-    detail: `~${taxi} min by cab (walking not practical)`,
-  };
+  const rec = options.find((o) => o.mode === recommended) ?? options[0];
+  const detail = `~${rec.minutes} min by ${rec.label.toLowerCase()}`;
+
+  return { meters, recommended: rec.mode, options, detail };
 }
