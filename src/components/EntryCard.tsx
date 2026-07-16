@@ -29,8 +29,6 @@ export default function EntryCard({
     useSortable({ id: entry.id });
 
   const place = entry.placeId !== undefined ? PLACE_BY_ID[entry.placeId] : undefined;
-  const branch =
-    place && entry.branchIndex !== undefined ? place.branches[entry.branchIndex] : undefined;
   const color = place ? CATEGORY_BY_KEY[place.category]?.color ?? "#334155" : "#64748b";
   const warning = checkHours(place, entry.startTime);
 
@@ -44,7 +42,7 @@ export default function EntryCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white rounded-2xl border border-black/5 shadow-sm shadow-slate-900/[0.03]"
+      className="group bg-white rounded-2xl border border-black/5 shadow-sm shadow-slate-900/[0.03]"
       onMouseEnter={() => onHover?.(entry.id)}
       onMouseLeave={() => onHover?.(null)}
     >
@@ -91,12 +89,6 @@ export default function EntryCard({
           >
             {entry.title}
           </div>
-          {branch && (
-            <div className="text-sm text-slate-500">
-              {branch.label} · {branch.neighborhood}
-            </div>
-          )}
-          {entry.note && <div className="text-sm text-slate-600 mt-1">{entry.note}</div>}
           {warning && (
             <div
               className={`text-xs mt-1 rounded px-2 py-1 ${
@@ -120,7 +112,7 @@ export default function EntryCard({
           </button>
           <button
             onClick={() => removeEntry(dayId, entry.id)}
-            className="text-xs text-slate-400 hover:text-red-500 transition-colors"
+            className="text-xs text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition"
           >
             Delete
           </button>

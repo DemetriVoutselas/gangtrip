@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -46,6 +46,137 @@ function pinIcon(n: number, color: string, isBest: boolean, isSelected: boolean)
     iconAnchor: [13, 26],
     popupAnchor: [0, -24],
   });
+}
+
+function PopupContent({
+  m,
+  branch,
+  cat,
+  isSelected,
+  onToggleRoute,
+  onRemovePlace,
+}: {
+  m: MarkerPoint;
+  branch: Place["branches"][number] | undefined;
+  cat: { name: string; color: string } | undefined;
+  isSelected: boolean;
+  onToggleRoute?: (p: RoutePoint) => void;
+  onRemovePlace?: (id: number) => void;
+}) {
+  const [showDetails, setShowDetails] = useState(false);
+  const p = m.place;
+  const hasDetails = !!(p.famousFor || p.order || p.price || p.reservations || p.hours);
+
+  return (
+    <div style={{ minWidth: 180, maxWidth: 260 }}>
+      <div style={{ fontWeight: 700 }}>
+        {m.placeId}. {p.name}
+      </div>
+      <div style={{ fontSize: 11, color: cat?.color, fontWeight: 600 }}>
+        {cat?.name}
+        {m.isBest ? " · ★ best branch" : ""}
+      </div>
+      {branch && (
+        <div style={{ fontSize: 12, marginTop: 4, color: "#64748b" }}>
+          {branch.label} · {branch.neighborhood}
+        </div>
+      )}
+
+      {p.flag && (
+        <div
+          style={{
+            fontSize: 12,
+            marginTop: 6,
+            color: "#b45309",
+            background: "#fffbeb",
+            padding: "3px 5px",
+            borderRadius: 4,
+          }}
+        >
+          ⚠ {p.flag}
+        </div>
+      )}
+
+      {hasDetails && showDetails && (
+        <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 2 }}>
+          {p.famousFor && <div style={{ fontSize: 12 }}>{p.famousFor}</div>}
+          {p.order && (
+            <div style={{ fontSize: 12 }}>
+              <strong>Order:</strong> {p.order}
+            </div>
+          )}
+          {p.price && (
+            <div style={{ fontSize: 12 }}>
+              <strong>Price:</strong> {p.price}
+            </div>
+          )}
+          {p.reservations && (
+            <div style={{ fontSize: 12 }}>
+              <strong>Reservations:</strong> {p.reservations}
+            </div>
+          )}
+          {p.hours && (
+            <div style={{ fontSize: 12 }}>
+              <strong>Hours:</strong> {p.hours}
+            </div>
+          )}
+        </div>
+      )}
+
+      {hasDetails && (
+        <button
+          onClick={() => setShowDetails((v) => !v)}
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#64748b",
+            background: "none",
+            border: "none",
+            padding: "4px 0 0",
+            cursor: "pointer",
+          }}
+        >
+          {showDetails ? "Less ▴" : "Details ▾"}
+        </button>
+      )}
+
+      <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+        <button
+          onClick={() =>
+            onToggleRoute?.({ key: m.key, label: p.name, lat: m.lat, lng: m.lng })
+          }
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            padding: "4px 8px",
+            borderRadius: 6,
+            border: "1px solid",
+            borderColor: isSelected ? "#2563eb" : "#cbd5e1",
+            background: isSelected ? "#2563eb" : "#fff",
+            color: isSelected ? "#fff" : "#334155",
+            cursor: "pointer",
+          }}
+        >
+          {isSelected ? "✓ In route" : "+ Route"}
+        </button>
+        <button
+          onClick={() => onRemovePlace?.(m.placeId)}
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            padding: "4px 8px",
+            borderRadius: 6,
+            border: "1px solid #fecaca",
+            background: "#fff",
+            color: "#dc2626",
+            cursor: "pointer",
+          }}
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function FitAll({ points }: { points: [number, number][] }) {
@@ -151,97 +282,14 @@ export default function ExploreMapInner({
             icon={pinIcon(m.placeId, m.color, m.isBest, isSelected)}
           >
             <Popup>
-              <div style={{ minWidth: 180, maxWidth: 260 }}>
-                <div style={{ fontWeight: 700 }}>
-                  {m.placeId}. {p.name}
-                </div>
-                <div style={{ fontSize: 11, color: cat?.color, fontWeight: 600 }}>
-                  {cat?.name}
-                  {m.isBest ? " · ★ best branch" : ""}
-                </div>
-                {branch && (
-                  <div style={{ fontSize: 12, marginTop: 4 }}>
-                    {branch.label} · {branch.neighborhood}
-                  </div>
-                )}
-                {p.famousFor && (
-                  <div style={{ fontSize: 12, marginTop: 4 }}>{p.famousFor}</div>
-                )}
-                {p.order && (
-                  <div style={{ fontSize: 12, marginTop: 4 }}>
-                    <strong>Order:</strong> {p.order}
-                  </div>
-                )}
-                {p.price && (
-                  <div style={{ fontSize: 12, marginTop: 2 }}>
-                    <strong>Price:</strong> {p.price}
-                  </div>
-                )}
-                {p.reservations && (
-                  <div style={{ fontSize: 12, marginTop: 2 }}>
-                    <strong>Reservations:</strong> {p.reservations}
-                  </div>
-                )}
-                {p.hours && (
-                  <div style={{ fontSize: 12, marginTop: 2 }}>
-                    <strong>Hours:</strong> {p.hours}
-                  </div>
-                )}
-                {p.flag && (
-                  <div
-                    style={{
-                      fontSize: 12,
-                      marginTop: 4,
-                      color: "#b45309",
-                      background: "#fffbeb",
-                      padding: "3px 5px",
-                      borderRadius: 4,
-                    }}
-                  >
-                    ⚠ {p.flag}
-                  </div>
-                )}
-                <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                  <button
-                    onClick={() =>
-                      onToggleRoute?.({
-                        key: m.key,
-                        label: p.name,
-                        lat: m.lat,
-                        lng: m.lng,
-                      })
-                    }
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      padding: "4px 8px",
-                      borderRadius: 6,
-                      border: "1px solid",
-                      borderColor: isSelected ? "#2563eb" : "#cbd5e1",
-                      background: isSelected ? "#2563eb" : "#fff",
-                      color: isSelected ? "#fff" : "#334155",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {isSelected ? "✓ In route" : "+ Route"}
-                  </button>
-                  <button
-                    onClick={() => onRemovePlace?.(m.placeId)}
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      padding: "4px 8px",
-                      borderRadius: 6,
-                      border: "1px solid #fecaca",
-                      background: "#fff",
-                      color: "#dc2626",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
+              <PopupContent
+                m={m}
+                branch={branch}
+                cat={cat}
+                isSelected={isSelected}
+                onToggleRoute={onToggleRoute}
+                onRemovePlace={onRemovePlace}
+              />
             </Popup>
           </Marker>
         );

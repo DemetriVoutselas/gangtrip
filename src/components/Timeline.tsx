@@ -71,10 +71,10 @@ export default function Timeline({
             const prev = i > 0 ? day.entries[i - 1] : null;
             const a = prev ? entryCoords(prev) : homeBase;
             const b = entryCoords(entry);
-            const showLeg = !activeId && a && b;
+            const thisLeg = !activeId && a && b ? leg(a, b) : null;
             return (
               <div key={entry.id}>
-                {showLeg && <TravelConnector leg={leg(a!, b!)} />}
+                {thisLeg && thisLeg.minutes > 2 && <TravelConnector leg={thisLeg} />}
                 <EntryCard entry={entry} dayId={day.id} onHover={onHover} />
               </div>
             );
